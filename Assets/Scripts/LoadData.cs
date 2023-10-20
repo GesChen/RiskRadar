@@ -38,12 +38,7 @@ public class LoadData : MonoBehaviour
 {
 	public static Dictionary<string, State> Data;
 	// Start is called before the first frame update
-	void Start()
-	{
-		Load();
-	}
-
-	void Load()
+	public void Load()
 	{
 		string pathToData = "D:\\Projects\\Programming\\Python Scripts\\.temps\\processstormdata\\get storm data\\jsonout.json";
 
