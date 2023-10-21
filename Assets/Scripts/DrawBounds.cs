@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class DrawBounds : MonoBehaviour
@@ -46,9 +45,28 @@ public class DrawBounds : MonoBehaviour
 			cityTransform.parent = stateTransform;
 		}
 
-		Transform partTransform = new GameObject(cityName + "PART", typeof(LineRenderer)).transform;
+		Transform partTransform = new GameObject(cityName + " PART", typeof(MeshFilter), typeof(MeshRenderer)).transform;
 		partTransform.parent = cityTransform;
+
+		Mesh mesh = new Mesh();
+		mesh.Clear();
+
+		int[] tris = Triangulate(geometry);
+		Vector3[] verts = new Vector3[geometry.Length];
+		for (int i = 0;i < geometry.Length; i++)
+		{
+			verts[i] = geometry[i];
+		}
+
+		mesh.vertices = verts;
+		mesh.triangles = tris;
+
+		mesh.RecalculateBounds();
+		mesh.RecalculateNormals();
 		
+		partTransform.GetComponent<MeshFilter>().sharedMesh = mesh;
+
+		/*
 		LineRenderer lineRenderer = partTransform.GetComponent<LineRenderer>();
 		Vector3[] geometryV3 = new Vector3[geometry.Length];
 		for (int i = 0;i < geometry.Length; i++)
@@ -59,7 +77,91 @@ public class DrawBounds : MonoBehaviour
 		lineRenderer.SetPositions(geometryV3);
 		lineRenderer.material = lineMat;
 		lineRenderer.alignment = LineAlignment.TransformZ;
+		lineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+		lineRenderer.receiveShadows = false;
+
 		lineRenderer.startWidth = width;
-		lineRenderer.endWidth = width;
+		lineRenderer.endWidth = width;*/
+	}
+	int[] Triangulate(Vector2[] geometry)
+	{
+		List<int> triangles = new ();
+		List<int> remainingVerts = new();
+		while (remainingVerts.Count > 3)
+		{
+			// check every point and its created triangle
+			for (int p = 0; p < geometry.Length; p++)
+			{
+				// dont process unnecessarily
+				if (!remainingVerts.Contains(p)) continue;
+
+				int prev = remainingVerts[(p - 1) % remainingVerts.Count];
+				int cur  = remainingVerts[p];
+				int next = remainingVerts[(p + 1) % remainingVerts.Count];
+
+				Vector2 a = geometry[prev];
+				Vector2 b = geometry[cur];
+				Vector2 c = geometry[next];
+
+				if (validAngle(a, b, c))
+				{
+					bool noneIn = true;
+					for (int v = 0; v < geometry.Length; v++)
+					{
+						if (remainingVerts.Contains(v) && v != p - 1 && v != p && v != p + 1)
+						{
+							if (pointInTri(geometry[v], new Triangle { v0 = a, v1 = b, v2 = c }))
+							{
+								noneIn = false;
+								break;
+							}
+						}
+					}
+					if (noneIn)
+					{
+						// valid, add to triangles and remove from remaining verts
+						triangles.Add(prev);
+						triangles.Add(cur);
+						triangles.Add(next);
+
+						remainingVerts.Remove(p);
+						break;
+					}
+				}
+			}
+		}
+
+		// finally add last 3 verts for final tri
+		triangles.Add(remainingVerts[0]);
+		triangles.Add(remainingVerts[1]);
+		triangles.Add(remainingVerts[2]);
+
+		return triangles.ToArray();
+	}
+	bool validAngle(Vector2 a, Vector2 b,  Vector2 c)
+	{
+		Vector2 v0 = a - b;
+		Vector2 v1 = c - b;
+
+		return v0.x * v1.y - v1.x * v0.y > 0;
+	}
+	bool pointInTri(Vector2 point, Triangle triangle)
+	{
+		Vector2 A = triangle.v0;
+		Vector2 B = triangle.v1;
+		Vector2 C = triangle.v2;
+		Vector2 P = point;
+
+		float u = (A.x * (C.y - A.y) + (P.y - A.y) * (C.x - A.x) - P.x * (C.y - A.y)) / ((B.y - A.y) * (C.x - A.x) - (B.x - A.x) * (C.y - A.y));
+		float v = (P.y - A.y - u * (B.y - A.y)) / (C.y - A.y);
+
+		// Check if point is in triangle
+		return (u >= 0) && (v >= 0) && (u + v <= 1);
+	}
+	struct Triangle
+	{
+		public Vector2 v0;
+		public Vector2 v1; 
+		public Vector2 v2;
 	}
 }
