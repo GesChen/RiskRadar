@@ -1,23 +1,25 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
 
 public class DrawBounds : MonoBehaviour
 {
 	public Transform container;
 	public Material lineMat;
 	public float width;
-	
-    public void Draw()
-    {
-		// iterate through all states
+	public void Draw()
+	{
+		StartCoroutine(DrawCoroutine());
+	}
+	IEnumerator DrawCoroutine() 
+	{
 		foreach (string stateName in LoadData.Data.Keys)
 		{
 			// iterate through cities in state
 			State stateData = LoadData.Data[stateName];
 			foreach (string cityName in stateData.Cities.Keys)
 			{
+				yield return new WaitForEndOfFrame();
 				CityData cityData = stateData.Cities[cityName];
 
 				List<List<List<List<float>>>> geometry = cityData.Geometry;
@@ -96,20 +98,20 @@ public class DrawBounds : MonoBehaviour
 	}
 	int[] Triangulate(Vector2[] geometry)
 	{
-		List<int> triangles = new ();
-		List<int> remainingVerts = geometry.ToList();
+		List<int> triangles = new();
+		List<int> remainingIndexes = new();
+		for (int i = 0; i < geometry.Length; i++)
+			remainingIndexes.Add(i);
 		
-		for(int i = 0; i < geometry.Length; i++) 
-			remainingVerts.Add(geometry[i]);
-		
-		while (remainingVerts.Count > 3)
+		while (remainingIndexes.Count > 3)
 		{
+			bool found = false;
 			// check remaining points only
-			for (int p = 0; p < remainingVerts.Count; p++)
+			for (int p = 0; p < remainingIndexes.Count; p++)
 			{				
-				int prev = remainingVerts[p == 0 ? remainingVerts.Count - 1 : (p - 1)]; //modulo wasnt doing what it was suposed to
-				int cur  = remainingVerts[p];
-				int next = remainingVerts[(p + 1) % remainingVerts.Count];
+				int prev = remainingIndexes[p == 0 ? remainingIndexes.Count - 1 : (p - 1)]; //modulo wasnt doing what it was suposed to
+				int cur  = remainingIndexes[p];
+				int next = remainingIndexes[(p + 1) % remainingIndexes.Count];
 
 				Vector2 a = geometry[prev];
 				Vector2 b = geometry[cur];
@@ -119,7 +121,7 @@ public class DrawBounds : MonoBehaviour
 				{ 
 					// detect and remove, then skip processing
 					Debug.Log($"Found Collinear point at {cur}, removing");
-					remainingVerts.RemoveAt(p);
+					remainingIndexes.RemoveAt(p);
 					continue;
 				}
 
@@ -129,14 +131,14 @@ public class DrawBounds : MonoBehaviour
 					// check if any points in remaining polygon other than tris 
 					// own points are in the tri
 					bool noneIn = true;
-					for (int v = 0; v < remainingVerts.Count; v++)
+					for (int v = 0; v < remainingIndexes.Count; v++)
 					{
-						int check = remainingVerts[v];
+						int check = remainingIndexes[v];
 						// dont include any of the triangles own points
 						if (!(check == prev || check == cur || check == next))
 						{
 							// slightly expensive, dont calculate if not needed
-							if (pointInTri(geometry[remainingVerts[v]], a, b, c ))
+							if (pointInTri(geometry[remainingIndexes[v]], a, b, c ))
 							{
 								noneIn = false;
 								break;
@@ -150,18 +152,27 @@ public class DrawBounds : MonoBehaviour
 						triangles.Add(cur);
 						triangles.Add(next);
 
-						// remove and removeat are two different things
-						remainingVerts.RemoveAt(p);
+						remainingIndexes.RemoveAt(p);
+						found = true;
 						break;
 					}
 				}
 			}
+			if (!found)
+			{
+				Debug.Log("how does this happend");
+				triangles.Add(remainingIndexes[remainingIndexes.Count - 1]);
+				triangles.Add(remainingIndexes[0]);
+				triangles.Add(remainingIndexes[1]);
+
+				remainingIndexes.RemoveAt(0);
+			}
 		}
 
 		// finally add last 3 verts for final tri
-		triangles.Add(remainingVerts[0]);
-		triangles.Add(remainingVerts[1]);
-		triangles.Add(remainingVerts[2]);
+		triangles.Add(remainingIndexes[0]);
+		triangles.Add(remainingIndexes[1]);
+		triangles.Add(remainingIndexes[2]);
 
 		return triangles.ToArray();
 	}
