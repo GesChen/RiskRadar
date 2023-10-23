@@ -8,10 +8,13 @@ public class DrawBounds : MonoBehaviour
 	public Transform container;
 	public Material lineMat;
 	public float width;
+	
     public void Draw()
     {
+		// iterate through all states
 		foreach (string stateName in LoadData.Data.Keys)
 		{
+			// iterate through cities in state
 			State stateData = LoadData.Data[stateName];
 			foreach (string cityName in stateData.Cities.Keys)
 			{
@@ -19,16 +22,23 @@ public class DrawBounds : MonoBehaviour
 
 				List<List<List<List<float>>>> geometry = cityData.Geometry;
 
+				// iterate through parts of city in this terrible data structure
 				foreach (List<List<List<float>>> bounds in geometry)
 				{
+					// convert coords in form of list [x,y] to vec2
+
 					Vector2[] coords = new Vector2[bounds[0].Count];
 					for (int i = 0; i < bounds[0].Count; i++)
 					{
 						coords[i] = new(bounds[0][i][0], bounds[0][i][1]);
 					}
+
 					CreateCityPart(stateName, cityName, coords);
+					break;
 				}
+				break;
 			}
+			break; // TODO: Remove breaks later, for testing purposes only
 		}
 	}
 	void CreateCityPart(string stateName, string cityName, Vector2[] geometry)
@@ -96,7 +106,7 @@ public class DrawBounds : MonoBehaviour
 		{
 			// check remaining points only
 			for (int p = 0; p < remainingVerts.Count; p++)
-			{
+			{				
 				int prev = remainingVerts[p == 0 ? remainingVerts.Count - 1 : (p - 1)]; //modulo wasnt doing what it was suposed to
 				int cur  = remainingVerts[p];
 				int next = remainingVerts[(p + 1) % remainingVerts.Count];
@@ -113,14 +123,20 @@ public class DrawBounds : MonoBehaviour
 					continue;
 				}
 
+				// angle is less than 180
 				if (validAngle(a, b, c))
 				{
+					// check if any points in remaining polygon other than tris 
+					// own points are in the tri
 					bool noneIn = true;
-					for (int v = 0; v < geometry.Length; v++)
+					for (int v = 0; v < remainingVerts.Count; v++)
 					{
-						if (remainingVerts.Contains(v) && v != p - 1 && v != p && v != p + 1)
+						int check = remainingVerts[v];
+						// dont include any of the triangles own points
+						if (!(check == prev || check == cur || check == next))
 						{
-							if (pointInTri(geometry[v], a, b, c }))
+							// slightly expensive, dont calculate if not needed
+							if (pointInTri(geometry[remainingVerts[v]], a, b, c ))
 							{
 								noneIn = false;
 								break;
@@ -134,6 +150,7 @@ public class DrawBounds : MonoBehaviour
 						triangles.Add(cur);
 						triangles.Add(next);
 
+						// remove and removeat are two different things
 						remainingVerts.RemoveAt(p);
 						break;
 					}
