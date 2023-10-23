@@ -103,6 +103,14 @@ public class DrawBounds : MonoBehaviour
 				Vector2 b = geometry[cur];
 				Vector2 c = geometry[next];
 
+				if (collinear(a, b, c)) //collinear points break everything
+				{ 
+					// detect and remove, then skip processing
+					Debug.Log($"Found Collinear point at {cur}, removing");
+					remainingVerts.RemoveAt(p);
+					continue;
+				}
+
 				if (validAngle(a, b, c))
 				{
 					bool noneIn = true;
@@ -110,7 +118,7 @@ public class DrawBounds : MonoBehaviour
 					{
 						if (remainingVerts.Contains(v) && v != p - 1 && v != p && v != p + 1)
 						{
-							if (pointInTri(geometry[v], new Triangle { v0 = a, v1 = b, v2 = c }))
+							if (pointInTri(geometry[v], a, b, c }))
 							{
 								noneIn = false;
 								break;
@@ -124,7 +132,7 @@ public class DrawBounds : MonoBehaviour
 						triangles.Add(cur);
 						triangles.Add(next);
 
-						remainingVerts.Remove(p);
+						remainingVerts.RemoveAt(p);
 						break;
 					}
 				}
@@ -140,28 +148,25 @@ public class DrawBounds : MonoBehaviour
 	}
 	bool validAngle(Vector2 a, Vector2 b,  Vector2 c)
 	{
+		return cross(a, b, c) > 0;
+	}
+	bool collinear(Vector2 a, Vector2 b, Vector2 c)
+	{ 
+		return cross(a, b, c) == 0;
+	}
+	float cross(Vector2 a, Vector2 b, Vector2 c) 
+	{
 		Vector2 v0 = a - b;
 		Vector2 v1 = c - b;
 
-		return v0.x * v1.y - v1.x * v0.y > 0;
+		return v0.x * v1.y - v1.x * v0.y;
 	}
-	bool pointInTri(Vector2 point, Triangle triangle)
+	public static bool pointInTri(Vector2 A, Vector2 B, Vector2 C, Vector2 P)
 	{
-		Vector2 A = triangle.v0;
-		Vector2 B = triangle.v1;
-		Vector2 C = triangle.v2;
-		Vector2 P = point;
-
 		float u = (A.x * (C.y - A.y) + (P.y - A.y) * (C.x - A.x) - P.x * (C.y - A.y)) / ((B.y - A.y) * (C.x - A.x) - (B.x - A.x) * (C.y - A.y));
 		float v = (P.y - A.y - u * (B.y - A.y)) / (C.y - A.y);
 
 		// Check if point is in triangle
 		return (u >= 0) && (v >= 0) && (u + v <= 1);
-	}
-	struct Triangle
-	{
-		public Vector2 v0;
-		public Vector2 v1; 
-		public Vector2 v2;
 	}
 }
