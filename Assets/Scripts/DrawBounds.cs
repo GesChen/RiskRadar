@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class DrawBounds : MonoBehaviour
 {
@@ -86,16 +87,17 @@ public class DrawBounds : MonoBehaviour
 	int[] Triangulate(Vector2[] geometry)
 	{
 		List<int> triangles = new ();
-		List<int> remainingVerts = new();
+		List<int> remainingVerts = geometry.ToList();
+		
+		for(int i = 0; i < geometry.Length; i++) 
+			remainingVerts.Add(geometry[i]);
+		
 		while (remainingVerts.Count > 3)
 		{
-			// check every point and its created triangle
-			for (int p = 0; p < geometry.Length; p++)
+			// check remaining points only
+			for (int p = 0; p < remainingVerts.Count; p++)
 			{
-				// dont process unnecessarily
-				if (!remainingVerts.Contains(p)) continue;
-
-				int prev = remainingVerts[(p - 1) % remainingVerts.Count];
+				int prev = remainingVerts[p == 0 ? remainingVerts.Count - 1 : (p - 1)]; //modulo wasnt doing what it was suposed to
 				int cur  = remainingVerts[p];
 				int next = remainingVerts[(p + 1) % remainingVerts.Count];
 
