@@ -41,11 +41,8 @@ public class DrawBounds : MonoBehaviour
 					}
 
 					CreateCityPart(stateName, cityName, coords.ToArray());
-					break;
-				}
-				break;
+				}			
 			}
-			break; // TODO: Remove breaks later, for testing purposes only
 		}
 	}
 	void CreateCityPart(string stateName, string cityName, Vector2[] geometry)
