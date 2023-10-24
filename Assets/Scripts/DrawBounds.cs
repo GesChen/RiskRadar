@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using UnityEngine;
 
 public class DrawBounds : MonoBehaviour
@@ -29,13 +30,17 @@ public class DrawBounds : MonoBehaviour
 				{
 					// convert coords in form of list [x,y] to vec2
 
-					Vector2[] coords = new Vector2[bounds[0].Count];
-					for (int i = 0; i < bounds[0].Count; i++)
+					List<Vector2> coords = new();
+					for (int i = 0; i < bounds[0].Count - 1; i++) //exclude last point, duplicate
 					{
-						coords[i] = new(bounds[0][i][0], bounds[0][i][1]);
+						Vector2 coord = new Vector2(bounds[0][i][0], bounds[0][i][1]);
+						if (!coords.Contains(coord)) // no duplicates
+						{
+							coords.Add(coord);
+						}
 					}
 
-					CreateCityPart(stateName, cityName, coords);
+					CreateCityPart(stateName, cityName, coords.ToArray());
 					break;
 				}
 				break;
@@ -66,7 +71,7 @@ public class DrawBounds : MonoBehaviour
 
 		int[] tris = Triangulate(geometry);
 		Vector3[] verts = new Vector3[geometry.Length];
-		for (int i = 0;i < geometry.Length; i++)
+		for (int i = 0; i < geometry.Length; i++)
 		{
 			verts[i] = geometry[i];
 		}
@@ -109,7 +114,7 @@ public class DrawBounds : MonoBehaviour
 			// check remaining points only
 			for (int p = 0; p < remainingIndexes.Count; p++)
 			{				
-				int prev = remainingIndexes[p == 0 ? remainingIndexes.Count - 1 : (p - 1)]; //modulo wasnt doing what it was suposed to
+				int prev = remainingIndexes[p == 0 ? remainingIndexes.Count - 1 : p - 1]; //modulo wasnt doing what it was suposed to
 				int cur  = remainingIndexes[p];
 				int next = remainingIndexes[(p + 1) % remainingIndexes.Count];
 
@@ -138,7 +143,7 @@ public class DrawBounds : MonoBehaviour
 						if (!(check == prev || check == cur || check == next))
 						{
 							// slightly expensive, dont calculate if not needed
-							if (pointInTri(geometry[remainingIndexes[v]], a, b, c ))
+							if (pointInTri(a, b, c , geometry[remainingIndexes[v]]))
 							{
 								noneIn = false;
 								break;
