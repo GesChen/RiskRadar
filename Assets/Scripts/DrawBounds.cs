@@ -1,12 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class DrawBounds : MonoBehaviour
 {
 	public Transform container;
-	public Material lineMat;
+	public Material mat;
 	public float width;
 	public void Draw()
 	{
@@ -34,7 +35,7 @@ public class DrawBounds : MonoBehaviour
 					for (int i = 0; i < bounds[0].Count - 1; i++) //exclude last point, duplicate
 					{
 						Vector2 coord = new Vector2(bounds[0][i][0], bounds[0][i][1]);
-						if (!coords.Contains(coord)) // no duplicates
+						if (!coords.Contains(coord)) // noduplicates
 						{
 							coords.Add(coord);
 						}
@@ -60,7 +61,7 @@ public class DrawBounds : MonoBehaviour
 			cityTransform.parent = stateTransform;
 		}
 
-		Transform partTransform = new GameObject(cityName + " PART", typeof(MeshFilter), typeof(MeshRenderer)).transform;
+		Transform partTransform = new GameObject(cityName + " PART").transform;
 		partTransform.parent = cityTransform;
 
 		Mesh mesh = new Mesh();
@@ -78,8 +79,9 @@ public class DrawBounds : MonoBehaviour
 
 		mesh.RecalculateBounds();
 		mesh.RecalculateNormals();
-		
-		partTransform.GetComponent<MeshFilter>().sharedMesh = mesh;
+
+		partTransform.AddComponent<MeshFilter>().sharedMesh = mesh;
+		partTransform.AddComponent<MeshRenderer>().material = mat;
 
 		/*
 		LineRenderer lineRenderer = partTransform.GetComponent<LineRenderer>();
@@ -172,10 +174,16 @@ public class DrawBounds : MonoBehaviour
 		}
 
 		// finally add last 3 verts for final tri
-		triangles.Add(remainingIndexes[0]);
-		triangles.Add(remainingIndexes[1]);
-		triangles.Add(remainingIndexes[2]);
-
+		try
+		{
+			triangles.Add(remainingIndexes[0]);
+			triangles.Add(remainingIndexes[1]);
+			triangles.Add(remainingIndexes[2]);
+		}
+		catch
+		{
+			Debug.Log("the hell");
+		}
 		return triangles.ToArray();
 	}
 	bool validAngle(Vector2 a, Vector2 b,  Vector2 c)
