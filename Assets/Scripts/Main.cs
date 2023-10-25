@@ -2,17 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Diagnostics;
+using System;
 
 public class Main : MonoBehaviour
 {
     LoadData loadDataComponent;
     DrawBounds drawBoundsComponent;
+    LoadMap loadMapComponent;
 
     // Start is called before the first frame update
     void Start()
     {
         loadDataComponent = GetComponent<LoadData>();
         drawBoundsComponent = GetComponent<DrawBounds>();
+        loadMapComponent = GetComponent<LoadMap>();
     }
 
     // Update is called once per frame
@@ -20,16 +23,9 @@ public class Main : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-			Stopwatch stopwatch = new Stopwatch();
-			stopwatch.Start();
 			loadDataComponent.Load();
-			stopwatch.Stop();
-			UnityEngine.Debug.Log($"loading time: {stopwatch.Elapsed}");
-			stopwatch.Reset();
-			stopwatch.Start();
 			drawBoundsComponent.Draw();
-			stopwatch.Stop();
-			UnityEngine.Debug.Log($"debug drawing time: {stopwatch.Elapsed}");
+            loadMapComponent.Load(DateTime.Now.Month);
 		}
     }
 }

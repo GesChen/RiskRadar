@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Security.Cryptography.X509Certificates;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -17,32 +18,37 @@ public class DrawBounds : MonoBehaviour
 	{
 		foreach (string stateName in LoadData.Data.Keys)
 		{
-			// iterate through cities in state
-			State stateData = LoadData.Data[stateName];
-			foreach (string cityName in stateData.Cities.Keys)
+			StartCoroutine(DrawState(stateName));
+			yield return new WaitForSeconds(.01f);
+		}
+	}
+	IEnumerator DrawState(string stateName)
+	{
+		// iterate through cities in state
+		State stateData = LoadData.Data[stateName];
+		foreach (string cityName in stateData.Cities.Keys)
+		{
+			yield return new WaitForEndOfFrame();
+			CityData cityData = stateData.Cities[cityName];
+
+			List<List<List<List<float>>>> geometry = cityData.Geometry;
+
+			// iterate through parts of city in this terrible data structure
+			foreach (List<List<List<float>>> bounds in geometry)
 			{
-				yield return new WaitForEndOfFrame();
-				CityData cityData = stateData.Cities[cityName];
+				// convert coords in form of list [x,y] to vec2
 
-				List<List<List<List<float>>>> geometry = cityData.Geometry;
-
-				// iterate through parts of city in this terrible data structure
-				foreach (List<List<List<float>>> bounds in geometry)
+				List<Vector2> coords = new();
+				for (int i = 0; i < bounds[0].Count - 1; i++) //exclude last point, duplicate
 				{
-					// convert coords in form of list [x,y] to vec2
-
-					List<Vector2> coords = new();
-					for (int i = 0; i < bounds[0].Count - 1; i++) //exclude last point, duplicate
+					Vector2 coord = new Vector2(bounds[0][i][0], bounds[0][i][1]);
+					if (!coords.Contains(coord)) // noduplicates
 					{
-						Vector2 coord = new Vector2(bounds[0][i][0], bounds[0][i][1]);
-						if (!coords.Contains(coord)) // noduplicates
-						{
-							coords.Add(coord);
-						}
+						coords.Add(coord);
 					}
+				}
 
-					CreateCityPart(stateName, cityName, coords.ToArray());
-				}			
+				CreateCityPart(stateName, cityName, coords.ToArray());
 			}
 		}
 	}
@@ -164,7 +170,7 @@ public class DrawBounds : MonoBehaviour
 			}
 			if (!found)
 			{
-				Debug.Log("how does this happend");
+				Debug.LogWarning("how does this happend");
 				triangles.Add(remainingIndexes[remainingIndexes.Count - 1]);
 				triangles.Add(remainingIndexes[0]);
 				triangles.Add(remainingIndexes[1]);
@@ -182,7 +188,7 @@ public class DrawBounds : MonoBehaviour
 		}
 		catch
 		{
-			Debug.Log("the hell");
+			Debug.LogWarning("the hell");
 		}
 		return triangles.ToArray();
 	}
