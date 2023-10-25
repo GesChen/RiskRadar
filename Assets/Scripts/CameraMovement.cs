@@ -6,22 +6,21 @@ public class CameraMovement : MonoBehaviour
 {
     public float drift;
 
-	Vector3 lastMousePos;
-	Vector3 vel;
+	Vector3 dragStart;
+	Vector3 targetPos;
+ 	bool dragging;
     void Update()
     {
-        Debug.Log(lastMousePos);
-        Debug.Log(Camera.main.ScreenToWorldPoint(Input.mousePosition));
         if (Input.GetMouseButtonDown(0))
         {
-            lastMousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            dragStart = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+			dragging = true;
         }
         else if (Input.GetMouseButton(0))
         {
-            vel = lastMousePos - Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            targetPos = dragstart - Camera.main.ScreenToWorldPoint(Input.mousePosition);
 		}
-        transform.position += vel;
-        vel *= 1 - drift;
-        lastMousePos = Vector3.Lerp(lastMousePos, Camera.main.ScreenToWorldPoint(Input.mousePosition), drift);
-    }
+		
+        transform.position = Vector3.Lerp(transform.position, targetPos, drift);
+	}
 }
