@@ -45,5 +45,7 @@ public class LoadData : MonoBehaviour
 		string jsonContent = File.ReadAllText(pathToData);
 
 		Data = JsonConvert.DeserializeObject<Dictionary<string, State>>(jsonContent);
+
+		Main.totalProgress++;
 	}
 }

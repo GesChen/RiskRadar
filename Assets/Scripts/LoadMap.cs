@@ -11,9 +11,10 @@ public class LoadMap : MonoBehaviour
 	{
 		StartCoroutine(StartLoading(month));
 	}
-	IEnumerator StartLoading(int month) { 
-        if (Directory.Exists("Assets/Images"))
-        {
+	IEnumerator StartLoading(int month)
+	{
+		if (Directory.Exists("Assets/Images"))
+		{
 			Dictionary<int, string> months = new()
 			{
 				{ 1, "jan" },
@@ -41,8 +42,8 @@ public class LoadMap : MonoBehaviour
 				{ "rld" , "_2_lower_left"  },
 				{ "rrd" , "_2_lower_right" }
 			};
-			
-			foreach(Material m in materials)
+
+			foreach (Material m in materials)
 			{
 				string path = months[month] + nameMappings[m.name] + ".png";
 
@@ -60,9 +61,10 @@ public class LoadMap : MonoBehaviour
 				{
 					Debug.LogError($"Could not find image {path}");
 				}
-				yield return new WaitForSeconds(.1f);
+				yield return new WaitForSeconds(.1f); // split workload over multiple frames
 			}
 			Debug.Log($"Loaded month {months[month]}");
+			Main.totalProgress++;
 		}
 	}
 }

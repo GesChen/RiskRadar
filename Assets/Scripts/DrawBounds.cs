@@ -41,7 +41,7 @@ public class DrawBounds : MonoBehaviour
 				List<Vector2> coords = new();
 				for (int i = 0; i < bounds[0].Count - 1; i++) //exclude last point, duplicate
 				{
-					Vector2 coord = new Vector2(bounds[0][i][0], bounds[0][i][1]);
+					Vector2 coord = new (bounds[0][i][0], bounds[0][i][1]);
 					if (!coords.Contains(coord)) // noduplicates
 					{
 						coords.Add(coord);
@@ -51,6 +51,8 @@ public class DrawBounds : MonoBehaviour
 				CreateCityPart(stateName, cityName, coords.ToArray());
 			}
 		}
+
+		Main.totalProgress++;
 	}
 	void CreateCityPart(string stateName, string cityName, Vector2[] geometry)
 	{
@@ -70,7 +72,7 @@ public class DrawBounds : MonoBehaviour
 		Transform partTransform = new GameObject(cityName + " PART").transform;
 		partTransform.parent = cityTransform;
 
-		Mesh mesh = new Mesh();
+		Mesh mesh = new();
 		mesh.Clear();
 
 		int[] tris = Triangulate(geometry);
@@ -128,9 +130,9 @@ public class DrawBounds : MonoBehaviour
 				Vector2 c = geometry[next];
 
 				if (collinear(a, b, c)) //collinear points break everything
-				{ 
+				{
 					// detect and remove, then skip processing
-					Debug.Log($"Found Collinear point at {cur}, removing");
+					Debug.LogWarning($"Found Collinear point at {cur}, removing");
 					remainingIndexes.RemoveAt(p);
 					continue;
 				}
@@ -171,7 +173,7 @@ public class DrawBounds : MonoBehaviour
 			if (!found)
 			{
 				Debug.LogWarning("how does this happend");
-				triangles.Add(remainingIndexes[remainingIndexes.Count - 1]);
+				triangles.Add(remainingIndexes[^1]);
 				triangles.Add(remainingIndexes[0]);
 				triangles.Add(remainingIndexes[1]);
 
