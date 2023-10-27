@@ -15,15 +15,25 @@ public class CameraNavigation : MonoBehaviour
 	Vector3 smoothedVel;
 
 	float targetZoom;
+	Main main;
 	void Start()
 	{
 		targetZoom = zoom;
+		main = FindAnyObjectByType<Main>();
 	}
 	void Update()
 	{
-		HandleDragMovement();
-		ApplyVelocity();
-		HandleZoom();
+		if (!Main.Loading && !main.movingCamera)
+		{
+			HandleDragMovement();
+			ApplyVelocity();
+			HandleZoom();
+		}
+		else if (main.movingCamera)
+		{
+			zoom = main.focusZoomLevel;
+			targetZoom = main.focusZoomLevel;
+		}
 	}
 
 	private void HandleDragMovement()

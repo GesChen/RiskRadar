@@ -1,7 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Security.Cryptography.X509Certificates;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -132,7 +130,6 @@ public class DrawBounds : MonoBehaviour
 				if (collinear(a, b, c)) //collinear points break everything
 				{
 					// detect and remove, then skip processing
-					Debug.LogWarning($"Found Collinear point at {cur}, removing");
 					remainingIndexes.RemoveAt(p);
 					continue;
 				}
