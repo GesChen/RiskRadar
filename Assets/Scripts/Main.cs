@@ -12,13 +12,21 @@ using UnityEngine.UI;
 
 public class Main : MonoBehaviour
 {
+	[Header("DEBUG")]
+	public bool disableLoadData;
+	public bool disableDraw;
+	public bool disableLoadMap;
+	public bool disableLoading;
+
 	LoadData loadDataComponent;
 	DrawBounds drawBoundsComponent;
 	LoadMap loadMapComponent;
+	CameraNavigation cameraNavigation;
 
 	public int month;
 
 	[Header("Loading")]
+	public GameObject[] hideWhileLoading;
 	public Volume volume;
 	DepthOfField dof;
 	public Slider progressBar;
@@ -36,17 +44,28 @@ public class Main : MonoBehaviour
 	public float doubleTapMaxInterval;
 	float lastClickTime;
 	bool doubleClickValid;
+	Vector3 lastClickPos;
 	public TextMeshProUGUI errorText;
 	public Transform locationMarker;
 	public float focusSmoothness;
 	public float focusZoomLevel;
 
+	[Header("Data Viz")]
+	public DataViz dataViz;
+	public TMP_Dropdown typeSelector;
+
 	// Start is called before the first frame update
 	void Start()
 	{
+		foreach (GameObject obj in hideWhileLoading)
+		{
+			obj.SetActive(false);
+		}
+
 		loadDataComponent = GetComponent<LoadData>();
 		drawBoundsComponent = GetComponent<DrawBounds>();
 		loadMapComponent = GetComponent<LoadMap>();
+		cameraNavigation = GetComponent<CameraNavigation>();
 
 		Loading = true;
 		volume.profile.TryGet(out dof);
@@ -56,9 +75,11 @@ public class Main : MonoBehaviour
 
 		month = DateTime.Now.Month;
 
-		loadDataComponent.Load();
-		drawBoundsComponent.Draw();
-		loadMapComponent.Load(month);
+		if (!disableLoadData) loadDataComponent.Load();
+		if (!disableDraw)    drawBoundsComponent.Draw();
+		if (!disableLoadMap) loadMapComponent.Load(month);
+		if (disableLoading) finishProgress = 0;
+
 	}
 
 	// Update is called once per frame
@@ -85,29 +106,42 @@ public class Main : MonoBehaviour
 			bgCol.a = Mathf.Lerp(bgCol.a, 0, .1f);
 			progressBarBGImage.color = bgCol;
 
+			foreach (GameObject obj in hideWhileLoading)
+			{
+				obj.SetActive(true);
+			}
 		}
 		else
 		{
 			progressBar.value = Mathf.Lerp(progressBar.value, totalProgress / finishProgress, .1f);
 		}
-		if (dof.focusDistance.value > 10)
+		if (dof.focusDistance.value > 10 && !doneTransitioning)
 		{
 			doneTransitioning = true;
 			progressBar.gameObject.SetActive(false);
 			dof.active = false;
+			StartCoroutine(startupLoad());
 		}
 	}
+	IEnumerator startupLoad()
+	{
+		yield return new WaitForSeconds(3);
+		VizData();
+	}
+
 	void HandleDoubleTap()
 	{
 		if (Input.GetMouseButtonDown(0))
 		{
-			lastClickTime = Time.time;
-			if(Time.time - lastClickTime < doubleTapMaxInterval && doubleClickValid) // double tapped
+			if(Time.time - lastClickTime < doubleTapMaxInterval && doubleClickValid 
+				&& Vector3.Distance(lastClickPos, Input.mousePosition) < 40) // double tapped
 			{
 				Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 				StartCoroutine(ShowLocation(pos.x, pos.y));
 				LocationInputField.text = $"{pos.x}, {pos.y}";
 			}
+			lastClickTime = Time.time;
+			lastClickPos = Input.mousePosition;
 			doubleClickValid = true;
 		}
 		if (Time.time > lastClickTime + doubleTapMaxInterval)
@@ -115,7 +149,6 @@ public class Main : MonoBehaviour
 			doubleClickValid = false;
 		}
 	}
-
 
 	public void Load()
 	{
@@ -195,6 +228,17 @@ public class Main : MonoBehaviour
 	[HideInInspector] public bool movingCamera;
 	IEnumerator ShowLocation(float longitude,  float latitude)
 	{
+		// out of bounds
+		if (longitude < cameraNavigation.boundsStart.x || longitude > cameraNavigation.boundsEnd.x || latitude < cameraNavigation.boundsStart.y || latitude > cameraNavigation.boundsEnd.y)
+		{
+			errorText.gameObject.SetActive(true);
+			errorText.text = "Out of bounds error";
+			yield return new WaitForSeconds(2);
+			errorText.gameObject.SetActive(false);
+			yield break;
+		}
+			
+
 		movingCamera = true;
 		Vector3 pos = new (longitude, latitude, -10);
 		locationMarker.position = pos + 5 * Vector3.forward;
@@ -225,5 +269,10 @@ public class Main : MonoBehaviour
 	{
 		public float lat;
 		public float lng;
+	}
+
+	public void VizData()
+	{
+		dataViz.Visualize(typeSelector.options[typeSelector.value].text);
 	}
 }

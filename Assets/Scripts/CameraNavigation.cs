@@ -10,6 +10,9 @@ public class CameraNavigation : MonoBehaviour
 	public float minZoom;
 	public float maxZoom;
 
+	public Vector2 boundsStart;
+	public Vector2 boundsEnd;
+
 	Vector3 dragStart;
 	[HideInInspector] public Vector3 vel;
 	Vector3 smoothedVel;
@@ -28,6 +31,7 @@ public class CameraNavigation : MonoBehaviour
 			HandleDragMovement();
 			ApplyVelocity();
 			HandleZoom();
+			RestrictMovement();
 		}
 		else if (main.movingCamera)
 		{
@@ -65,5 +69,11 @@ public class CameraNavigation : MonoBehaviour
 
 		Camera.main.orthographicSize = zoom;
 	}
-
+	private void RestrictMovement()
+	{
+		Vector3 pos = transform.position;
+		pos.x = Mathf.Clamp(pos.x, boundsStart.x, boundsEnd.x);
+		pos.y = Mathf.Clamp(pos.y, boundsStart.y, boundsEnd.y);
+		transform.position = pos;
+	}
 }
