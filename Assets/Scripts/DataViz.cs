@@ -26,6 +26,7 @@ public class DataViz : MonoBehaviour
                     maxCount = weatherEvent.TotalCount;
             }
         }
+		FindObjectOfType<Main>().scaleMaxText.text = maxCount.ToString();
 
 		float maxSat = RGBtoHSV(visualizationColor).S;
 		HSVColor hsvCol = RGBtoHSV(visualizationColor);
