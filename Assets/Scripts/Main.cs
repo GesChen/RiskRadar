@@ -34,7 +34,7 @@ public class Main : MonoBehaviour
 	public static bool Loading = true;
 	private float finishProgress = 50 + 1 + 8; // last number is completely arbitrary, i have no clue where it came from
 	bool doneTransitioning;
-	
+
 	Image progressBarFillImage;
 	Image progressBarBGImage;
 	TextMeshProUGUI loadingText;
@@ -54,6 +54,7 @@ public class Main : MonoBehaviour
 	public DataViz dataViz;
 	public TMP_Dropdown typeSelector;
 	public TextMeshProUGUI scaleMaxText;
+	public Popout DataPopOut;
 
 	// Start is called before the first frame update
 	void Start()
@@ -77,7 +78,7 @@ public class Main : MonoBehaviour
 		month = DateTime.Now.Month;
 
 		if (!disableLoadData) loadDataComponent.Load();
-		if (!disableDraw)    drawBoundsComponent.Draw();
+		if (!disableDraw) drawBoundsComponent.Draw();
 		if (!disableLoadMap) loadMapComponent.Load(month);
 		if (disableLoading) finishProgress = 0;
 
@@ -134,7 +135,7 @@ public class Main : MonoBehaviour
 	{
 		if (Input.GetMouseButtonDown(0))
 		{
-			if(Time.time - lastClickTime < doubleTapMaxInterval && doubleClickValid 
+			if (Time.time - lastClickTime < doubleTapMaxInterval && doubleClickValid
 				&& Vector3.Distance(lastClickPos, Input.mousePosition) < 40) // double tapped
 			{
 				Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -227,7 +228,7 @@ public class Main : MonoBehaviour
 	}
 
 	[HideInInspector] public bool movingCamera;
-	IEnumerator ShowLocation(float longitude,  float latitude)
+	IEnumerator ShowLocation(float longitude, float latitude)
 	{
 		// out of bounds
 		if (longitude < cameraNavigation.boundsStart.x || longitude > cameraNavigation.boundsEnd.x || latitude < cameraNavigation.boundsStart.y || latitude > cameraNavigation.boundsEnd.y)
@@ -238,10 +239,10 @@ public class Main : MonoBehaviour
 			errorText.gameObject.SetActive(false);
 			yield break;
 		}
-			
 
+		HandleDataPopout(longitude, latitude);
 		movingCamera = true;
-		Vector3 pos = new (longitude, latitude, -10);
+		Vector3 pos = new(longitude, latitude, -10);
 		locationMarker.position = pos + 5 * Vector3.forward;
 		while (!Input.GetMouseButton(0) || Input.mouseScrollDelta.y > .1f)
 		{
@@ -253,6 +254,81 @@ public class Main : MonoBehaviour
 		}
 		movingCamera = false;
 	}
+
+	void HandleDataPopout(float longitude, float latitude)
+	{
+		Place place = getPlace(longitude, latitude);
+		if (place.City != null)
+		{
+			DataPopOut.open = true;
+			List<WeatherEvent> weatherEvents = LoadData.Data[place.State].Cities[place.City].Events;
+
+			// set title text
+			DataPopOut.titleText.text = $"{place.City}, {place.State}";
+
+			// set body text
+			TextMeshProUGUI text = DataPopOut.bodyText;
+			text.text = "";
+
+			foreach (WeatherEvent weatherEvent in weatherEvents)
+			{
+				text.text += $"{weatherEvent.Type} has occurred {weatherEvent.TotalCount} times \n";
+			}
+		}
+	}
+
+	struct Place
+	{
+		public string City { get; set; }
+		public string State { get; set; }
+	}
+	// finds what city point is in, otherwise returns closest city
+	Place getPlace(float longitude, float latitude) 
+	{
+		Vector2 point = new(longitude, latitude);
+		float closestDistanceSqrd = Mathf.Infinity;
+		Place closestPlace = new Place();
+		foreach (Transform state in GameObject.Find("Visuals").transform)
+		{
+			foreach(Transform city in state)
+			{
+				foreach(MeshFilter part in city.GetComponentsInChildren<MeshFilter>())
+				{
+					if (pointInPoly(part.mesh.vertices, point))
+					{
+						return new Place { City = city.name, State = state.name };
+					}
+
+					float dist = ((Vector3) point - part.transform.position).sqrMagnitude;
+					if (dist < closestDistanceSqrd) // keep track of closest part if 
+					{ 
+						closestDistanceSqrd = dist;
+						closestPlace = new Place { City = city.name, State = state.name };
+					}
+				}
+			}
+		}
+		return closestPlace;
+	}
+	bool pointInPoly(Vector3[] polygon, Vector2 point)
+	{
+		int polygonLength = polygon.Length;
+		bool inside = false;
+
+		for (int i = 0, j = polygonLength - 1; i < polygonLength; j = i++)
+		{
+			if ((polygon[i].y > point.y) != (polygon[j].y > point.y) &&
+				point.x < (polygon[j].x - polygon[i].x) * (point.y - polygon[i].y) / (polygon[j].y - polygon[i].y) + polygon[i].x)
+			{
+				inside = !inside;
+			}
+		}
+
+
+		return inside;
+
+	}
+
 
 	public class GeocodingResponse
 	{

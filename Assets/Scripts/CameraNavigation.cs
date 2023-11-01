@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class CameraNavigation : MonoBehaviour
 {
@@ -62,8 +63,11 @@ public class CameraNavigation : MonoBehaviour
 	}
 	private void HandleZoom()
 	{
-		targetZoom += -Input.mouseScrollDelta.y * zoomSensitivity * Time.deltaTime;
-		targetZoom = Mathf.Clamp(targetZoom, minZoom, maxZoom);
+		if (!EventSystem.current.IsPointerOverGameObject()) // mouse not over UI
+		{
+			targetZoom += -Input.mouseScrollDelta.y * zoomSensitivity * Time.deltaTime;
+			targetZoom = Mathf.Clamp(targetZoom, minZoom, maxZoom);
+		}
 
 		zoom = Mathf.Lerp(zoom, targetZoom, globalDrift);
 
