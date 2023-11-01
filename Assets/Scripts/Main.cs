@@ -55,7 +55,7 @@ public class Main : MonoBehaviour
 	public TMP_Dropdown typeSelector;
 	public TextMeshProUGUI scaleMaxText;
 	public Popout DataPopOut;
-
+	public string KEY;
 	// Start is called before the first frame update
 	void Start()
 	{
@@ -173,7 +173,7 @@ public class Main : MonoBehaviour
 		}
 		else // try to find address
 		{
-			string url = $"https://maps.googleapis.com/maps/api/geocode/json?address={UnityWebRequest.EscapeURL(query)}&key=AIzaSyC8eYyUYKeBR_hLPzCfnGDJqHZw62y_zdo";
+			string url = $"https://maps.googleapis.com/maps/api/geocode/json?address={UnityWebRequest.EscapeURL(query)}&key={KEY}";
 
 			using (UnityWebRequest www = UnityWebRequest.Get(url))
 			{
