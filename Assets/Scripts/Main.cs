@@ -55,8 +55,8 @@ public class Main : MonoBehaviour
 	public TMP_Dropdown typeSelector;
 	public TextMeshProUGUI scaleMaxText;
 	public Popout DataPopOut;
-	public string KEY;
-	// Start is called before the first frame update
+
+ 	// Start is called before the first frame update
 	void Start()
 	{
 		foreach (GameObject obj in hideWhileLoading)
@@ -173,7 +173,7 @@ public class Main : MonoBehaviour
 		}
 		else // try to find address
 		{
-			string url = $"https://maps.googleapis.com/maps/api/geocode/json?address={UnityWebRequest.EscapeURL(query)}&key={KEY}";
+			string url = $"https://maps.googleapis.com/maps/api/geocode/json?address={UnityWebRequest.EscapeURL(query)}&key=AIzaSyC8eYyUYKeBR_hLPzCfnGDJqHZw62y_zdo";
 
 			using (UnityWebRequest www = UnityWebRequest.Get(url))
 			{
