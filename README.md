@@ -1,2 +1,2 @@
 # conapp
- congressional app challenge
+ All project files and code for the congressional app challenge
